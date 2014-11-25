@@ -29,9 +29,9 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 	private int numVertices;
 	private int numMoves;
 	
-	private int par;
-	private int movesMade;
+	private int movesMade = 0;
 	private int level;
+	private float score;
 	
 	private final int RESET_X;
 	private final int RESET_Y;
@@ -53,13 +53,12 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 	 * @param numVertices the number of vertices the polygon has
 	 * @param numMoves the number of initial moves to make
 	 */
-	public GameScreen(Game g, int numVertices, int numMoves, int par, int movesMade, int level) {
+	public GameScreen(Game g, int numVertices, int numMoves, float score, int level) {
 		this.g = g;
 		this.numVertices = numVertices;
 		this.numMoves = numMoves;
 		
-		this.par = par;
-		this.movesMade = movesMade;
+		this.score = score;
 		this.level = level;
 		
 		// place polygon in the center of the screen
@@ -132,20 +131,15 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 		
 		batch.begin();
 		
-		String movesStr = "Moves: " + movesMade;
 		String levelStr = "Level: " + level;
-		String scoreStr = "Score: " + (par - movesMade);
+		String scoreStr = "Score: " + (score + (float)numMoves/Math.max(numMoves, movesMade));
 		
-		smallText.draw(batch, movesStr,
+		smallText.draw(batch, levelStr,
 				10,
 				Gdx.graphics.getHeight() - 10);
 		
-		smallText.draw(batch, levelStr,
-				Gdx.graphics.getWidth() - smallText.getBounds(levelStr).width - 10,
-				Gdx.graphics.getHeight() - 10);
-		
 		largeText.draw(batch, scoreStr,
-				(Gdx.graphics.getWidth() - largeText.getBounds(scoreStr).width)/2,
+				Gdx.graphics.getWidth() - largeText.getBounds(scoreStr).width - 10,
 				Gdx.graphics.getHeight() - 10);
 		
 		largeText.draw(batch, RESETSTR,
@@ -167,7 +161,7 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 				screenY < RESET_Y) {
 			Gdx.input.setInputProcessor(null);
 			
-			movesMade += numMoves*2;
+			movesMade = Integer.MAX_VALUE;
 			
 			endScreen();
 		} else if (poly != null) {
@@ -191,11 +185,17 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 	 * after game end.
 	 */
 	@Override public void onEvent(int arg0, BaseTween<?> arg1) {
-		// possibly increase the number of moves - increasing diffculty
-		if (MathUtils.randomBoolean(CHANCE_TO_INCREASE_MOVES)) numMoves++;
+		// possibly increase the number of moves, increasing diffculty
+		int newNumMoves = numMoves;
+		if (MathUtils.randomBoolean(CHANCE_TO_INCREASE_MOVES)) newNumMoves++;
 		
 		// switch to new Screen
-		g.setScreen(new GameScreen(g, numVertices, numMoves, par + numMoves, movesMade, level + 1));
+		g.setScreen(new GameScreen(
+				g,
+				numVertices,
+				newNumMoves,
+				score + (float)numMoves/Math.max(numMoves, movesMade),
+				level + 1));
 		dispose();
 	}
 	

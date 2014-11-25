@@ -89,7 +89,7 @@ public class MainMenu implements Screen, InputProcessor, TweenCallback {
 	 * after game end.
 	 */
 	@Override public void onEvent(int arg0, BaseTween<?> arg1) {
-		g.setScreen(new GameScreen(g, polySelected, 3, 0, 0, 1));
+		g.setScreen(new GameScreen(g, polySelected, 3, 0, 1));
 		dispose();
 	}
 	
