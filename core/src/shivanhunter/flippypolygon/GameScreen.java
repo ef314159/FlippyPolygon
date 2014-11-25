@@ -131,8 +131,17 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 		
 		batch.begin();
 		
+		float totalScore = score + (float)numMoves/Math.max(numMoves, movesMade);
+		
 		String levelStr = "Level: " + level;
-		String scoreStr = "Score: " + (score + (float)numMoves/Math.max(numMoves, movesMade));
+		
+		// construct a "%.2f" score string using math
+		// lazy solution - should implement GWT's NumberFormat or other better solution at some point
+		String scoreStr = "Score: " +
+				(int)(totalScore) + 
+				"." + 
+				(int)(totalScore*10%10) + 
+				(int)(totalScore*100%10);
 		
 		smallText.draw(batch, levelStr,
 				10,
