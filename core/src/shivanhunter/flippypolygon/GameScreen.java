@@ -37,6 +37,12 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 	private final int RESET_Y;
 	private String RESETSTR = "NEW LEVEL";
 	
+	private final int QUIT_X;
+	private final int QUIT_Y;
+	private String QUITSTR = "MAIN MENU";
+	
+	private Screen nextScreen = null;
+	
 	private static final float CHANCE_TO_INCREASE_MOVES = 0.1f;
 	
 	/**
@@ -87,8 +93,11 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 			poly.flipTowards(x, y);
 		}
 		
-		RESET_X = Gdx.graphics.getWidth()/2;
+		RESET_X = 4;
 		RESET_Y = 32;
+		
+		QUIT_X = Gdx.graphics.getWidth() - 4;
+		QUIT_Y = 32;
 	}
 
 	/**
@@ -152,8 +161,12 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 				Gdx.graphics.getHeight() - 10);
 		
 		largeText.draw(batch, RESETSTR,
-				RESET_X - largeText.getBounds(RESETSTR).width/2,
+				RESET_X,
 				RESET_Y);
+		
+		largeText.draw(batch, QUITSTR,
+				QUIT_X - largeText.getBounds(QUITSTR).width,
+				QUIT_Y);
 		
 		batch.end();
 	}
@@ -164,13 +177,36 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 	@Override public boolean touchUp(int screenX, int screenY, int pointer, int button) {
 		screenY = Gdx.graphics.getHeight() - screenY;
 		
-		if (    screenX > RESET_X - largeText.getBounds(RESETSTR).width/2 &&
-				screenX < RESET_X + largeText.getBounds(RESETSTR).width/2 &&
+		if (    screenX > RESET_X &&
+				screenX < RESET_X + largeText.getBounds(RESETSTR).width &&
 				screenY > RESET_Y - largeText.getBounds(RESETSTR).height &&
 				screenY < RESET_Y) {
 			Gdx.input.setInputProcessor(null);
 			
+			// player gets no score by skipping a level
 			movesMade = Integer.MAX_VALUE;
+			
+			// possibly increase the number of moves, increasing diffculty
+			int newNumMoves = numMoves;
+			if (MathUtils.randomBoolean(CHANCE_TO_INCREASE_MOVES)) newNumMoves++;
+			
+			// initialize the next level
+			nextScreen = new GameScreen(
+					g,
+					numVertices,
+					newNumMoves,
+					score + (float)numMoves/Math.max(numMoves, movesMade),
+					level + 1);
+			
+			endScreen();
+		} else if(screenX > QUIT_X - largeText.getBounds(QUITSTR).width &&
+				screenX < QUIT_X &&
+				screenY > QUIT_Y - largeText.getBounds(QUITSTR).height &&
+				screenY < QUIT_Y) {
+			Gdx.input.setInputProcessor(null);
+			
+			// initialize the menu to return to
+			nextScreen = new MainMenu(g);
 			
 			endScreen();
 		} else if (poly != null) {
@@ -185,8 +221,10 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 	 * Ends this screen and moves to the next one.
 	 */
 	private void endScreen() {
-		poly.pause();
-		poly.dissapear(this, manager);
+		if (nextScreen != null) {
+			poly.pause();
+			poly.dissapear(this, manager);
+		}
 	}
 	
 	/**
@@ -194,18 +232,11 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 	 * after game end.
 	 */
 	@Override public void onEvent(int arg0, BaseTween<?> arg1) {
-		// possibly increase the number of moves, increasing diffculty
-		int newNumMoves = numMoves;
-		if (MathUtils.randomBoolean(CHANCE_TO_INCREASE_MOVES)) newNumMoves++;
-		
-		// switch to new Screen
-		g.setScreen(new GameScreen(
-				g,
-				numVertices,
-				newNumMoves,
-				score + (float)numMoves/Math.max(numMoves, movesMade),
-				level + 1));
-		dispose();
+		if (nextScreen != null) {
+			// switch to new Screen
+			g.setScreen(nextScreen);
+			dispose();
+		}
 	}
 	
 	@Override public void dispose() {
