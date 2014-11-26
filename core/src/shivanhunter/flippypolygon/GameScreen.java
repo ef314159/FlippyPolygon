@@ -135,7 +135,7 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 		destination.draw(renderer, false);
 		
 		if (poly.equals(destination)) {
-			endScreen();
+			endScreen(false);
 		}
 		
 		batch.begin();
@@ -186,6 +186,33 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 			// player gets no score by skipping a level
 			movesMade = Integer.MAX_VALUE;
 			
+			endScreen(false);
+		} else if(screenX > QUIT_X - largeText.getBounds(QUITSTR).width &&
+				screenX < QUIT_X &&
+				screenY > QUIT_Y - largeText.getBounds(QUITSTR).height &&
+				screenY < QUIT_Y) {
+			Gdx.input.setInputProcessor(null);
+			
+			endScreen(true);
+		} else if (poly != null) {
+			if (poly.flipTowards(screenX, screenY, manager)) {
+				movesMade++;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Ends this screen and moves to the next one. Switches the Game's Screen
+	 * either to a main menu or another level.
+	 * 
+	 * @Param whether to quit to the main menu
+	 */
+	private void endScreen(boolean quitToMenu) {
+		// set nextScreen to be used by the tween callback
+		if (quitToMenu) {
+			nextScreen = new MainMenu(g);
+		} else {
 			// possibly increase the number of moves, increasing diffculty
 			int newNumMoves = numMoves;
 			if (MathUtils.randomBoolean(CHANCE_TO_INCREASE_MOVES)) newNumMoves++;
@@ -197,34 +224,10 @@ public class GameScreen implements Screen, InputProcessor, TweenCallback {
 					newNumMoves,
 					score + (float)numMoves/Math.max(numMoves, movesMade),
 					level + 1);
-			
-			endScreen();
-		} else if(screenX > QUIT_X - largeText.getBounds(QUITSTR).width &&
-				screenX < QUIT_X &&
-				screenY > QUIT_Y - largeText.getBounds(QUITSTR).height &&
-				screenY < QUIT_Y) {
-			Gdx.input.setInputProcessor(null);
-			
-			// initialize the menu to return to
-			nextScreen = new MainMenu(g);
-			
-			endScreen();
-		} else if (poly != null) {
-			if (poly.flipTowards(screenX, screenY, manager)) {
-				movesMade++;
-			}
 		}
-		return true;
-	}
-	
-	/**
-	 * Ends this screen and moves to the next one.
-	 */
-	private void endScreen() {
-		if (nextScreen != null) {
-			poly.pause();
-			poly.dissapear(this, manager);
-		}
+		
+		poly.pause();
+		poly.dissapear(this, manager);
 	}
 	
 	/**
